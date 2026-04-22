@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>花一云朵字生成器 | 多行文字·多图·整体轮廓</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #f5f9ef;
+            font-family: 'Segoe UI', 'Helvetica Neue', system-ui, -apple-system, sans-serif;
+            padding: 2rem 1.5rem;
+            color: #2c4a3b;
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 苔花装饰 */
+        body::before {
+            content: "❀";
+            font-size: 100px;
+            color: #bdd9b5;
+            position: fixed;
+            bottom: 10px;
+            left: -20px;
+            opacity: 0.2;
+            pointer-events: none;
+            transform: rotate(-15deg);
+            font-family: serif;
+            z-index: 0;
+        }
+        body::after {
+            content: "✿";
+            font-size: 80px;
+            color: #c2e0b0;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            opacity: 0.2;
+            pointer-events: none;
+            transform: rotate(10deg);
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 400;
+            letter-spacing: 2px;
+            color: #3b6b4a;
+            margin-bottom: 1rem;
+            flex-shrink: 0;
+        }
+
+        .main-layout {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 1.8rem;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* 左侧控制区 - 可滚动 */
+        .controls-panel {
+            flex: 1.2;
+            min-width: 320px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(3px);
+            border-radius: 32px;
+            padding: 1.2rem;
+            box-shadow: 0 8px 20px rgba(80, 70, 40, 0.05);
+            border: 1px solid #ddecd4;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: calc(100vh - 120px);
+        }
+
+        .controls-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        .controls-panel::-webkit-scrollbar-track {
+            background: #e2efd8;
+            border-radius: 10px;
+        }
+        .controls-panel::-webkit-scrollbar-thumb {
+            background: #b0cb9a;
+            border-radius: 10px;
+        }
+
+        /* 选项卡按钮 */
+        .tab-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #d4e2c9;
+            padding-bottom: 8px;
+            flex-shrink: 0;
+        }
+        .tab-btn {
+            background: transparent;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 6px 18px;
+            border-radius: 40px;
+            color: #5c7c5a;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: #e2f0d9;
+            color: #2a5e3f;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+        }
+        .tab-content {
+            display: none;
+            animation: fade 0.2s ease;
+        }
+        .tab-content.active-tab {
+            display: block;
+        }
+        @keyframes fade {
+            from { opacity: 0; transform: translateY(5px);}
+            to { opacity: 1; transform: translateY(0);}
+        }
+
+        .card-section {
+            background: #ffffffd9;
+            border-radius: 24px;
+            padding: 1rem 1.2rem;
+            margin-bottom: 1.2rem;
+            border: 1px solid #e2efd8;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-bottom: 18px;
+            align-items: center;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 100px;
+        }
+        label {
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: #446b51;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, textarea, button {
+            border-radius: 60px;
+            border: 1px solid #caddc1;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+            background: white;
+            transition: all 0.2s;
+            width: 100%;
+            font-family: inherit;
+        }
+        textarea {
+            border-radius: 24px;
+            resize: vertical;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #8abf6e;
+            box-shadow: 0 0 0 2px #cbe5bd;
+        }
+        button {
+            background: #eef5e9;
+            cursor: pointer;
+            font-weight: 500;
+            color: #2a5e3f;
+            border-color: #bcd6aa;
+        }
+        button:hover {
+            background: #e2f0d9;
+            border-color: #95b87a;
+            transform: scale(0.98);
+        }
+        .btn-download {
+            background: #4b7b5c;
+            color: white;
+            border: none;
+            padding: 10px 24px;
+            font-weight: 600;
+            border-radius: 40px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        .btn-download:hover {
+            background: #386a48;
+            transform: translateY(-1px);
+        }
+        .badge {
+            background: #d9ecce;
+            border-radius: 30px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            color: #366e48;
+        }
+        /* 轮廓顺序: ❶贴近层(内) -> ❷向外层(中) -> ❸最外层(外) */
+        .outline-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            background: #fafef7;
+            padding: 10px 12px;
+            border-radius: 32px;
+            margin-bottom: 12px;
+        }
+        .outline-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: white;
+            padding: 6px 14px;
+            border-radius: 48px;
+            border: 1px solid #dcebd2;
+            flex-wrap: wrap;
+        }
+        .outline-item span:first-child {
+            min-width: 130px;
+            font-weight: 500;
+        }
+        .outline-item input {
+            width: 90px;
+            padding: 6px;
+        }
+        /* 多图片管理样式 */
+        .multi-image-list {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 12px;
+        }
+        .image-card {
+            background: #fafef7;
+            border-radius: 20px;
+            padding: 10px;
+            margin-bottom: 12px;
+            border: 1px solid #dde5d2;
+        }
+        .image-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .image-card-title {
+            font-weight: 500;
+            font-size: 0.8rem;
+        }
+        .image-card-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .image-card-controls input {
+            width: 70px;
+            padding: 4px;
+        }
+        .transform-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .icon-btn {
+            width: auto;
+            background: #e6f0de;
+            border-radius: 32px;
+            padding: 6px 12px;
+            font-size: 0.75rem;
+        }
+        .layout-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .layout-btn {
+            flex: 1;
+            text-align: center;
+            background: #eff5ea;
+            border-radius: 40px;
+            padding: 8px 0;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #cbdcc0;
+        }
+        .layout-btn.active-layout {
+            background: #aacf92;
+            color: white;
+            border-color: #8bb56a;
+        }
+        /* 每个字符颜色区域 */
+        .char-colors-area {
+            background: #fafef7;
+            border-radius: 24px;
+            padding: 12px;
+            margin-top: 8px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .char-color-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            background: white;
+            padding: 5px 10px;
+            border-radius: 40px;
+            border: 1px solid #e2efd8;
+        }
+        .char-index {
+            font-weight: 600;
+            min-width: 30px;
+        }
+        .char-char {
+            font-size: 1.1rem;
+            min-width: 40px;
+            font-weight: 500;
+        }
+        .char-color-input {
+            width: 50px;
+            height: 32px;
+            padding: 2px;
+            border-radius: 20px;
+        }
+        .btn-small {
+            padding: 4px 12px;
+            font-size: 0.7rem;
+            width: auto;
+            background: #e2f0d9;
+        }
+        /* 右侧预览区 */
+        .preview-panel {
+            flex: 1.8;
+            background: #ffffffcc;
+            backdrop-filter: blur(4px);
+            border-radius: 36px;
+            padding: 1.2rem;
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2f0da;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .canvas-wrapper {
+            background: #f4f9ef;
+            border-radius: 28px;
+            padding: 10px;
+            text-align: center;
+            box-shadow: inset 0 0 0 1px #e0edcf, 0 6px 12px rgba(0,0,0,0.05);
+            cursor: grab;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+        .canvas-wrapper:active {
+            cursor: grabbing;
+        }
+        canvas {
+            width: 100%;
+            height: auto;
+            max-width: 100%;
+            border-radius: 20px;
+            background: #fffef7;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            pointer-events: auto;
+        }
+        .info-note {
+            font-size: 0.7rem;
+            color: #7a9b6e;
+            margin-top: 8px;
+            text-align: center;
+        }
+        @media (max-width: 900px) {
+            .main-layout { flex-direction: column; }
+            body { overflow: auto; height: auto; }
+            .controls-panel { max-height: 500px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌸 花一 · 云朵字生成器</h1>
+    <div class="main-layout">
+        <!-- 左侧控制区 -->
+        <div class="controls-panel">
+            <div class="tab-buttons">
+                <button class="tab-btn active" data-tab="tab-text">📝 文字</button>
+                <button class="tab-btn" data-tab="tab-image">🖼️ 图片</button>
+                <button class="tab-btn" data-tab="tab-download">⬇️ 下载</button>
+            </div>
+
+            <!-- 文字板块 -->
+            <div id="tab-text" class="tab-content active-tab">
+                <div class="card-section">
+                    <div class="form-row">
+                        <div class="form-group" style="flex:2">
+                            <label>✍️ 输入文字（支持多行，每行自动换行）</label>
+                            <textarea id="textInput" rows="4" placeholder="例如：&#10;以梦为马&#10;不负韶华">云朵如花</textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>📄 上传 .txt 文件</label>
+                            <input type="file" id="txtFileUpload" accept=".txt">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>🎨 统一颜色 (快速设置)</label>
+                            <input type="color" id="globalColor" value="#4A6741">
+                            <button id="applyGlobalColor" class="btn-small" style="margin-top:5px;">应用到所有字符</button>
+                        </div>
+                        <div class="form-group">
+                            <label>🔠 字号(px)</label>
+                            <input type="number" id="fontSize" value="80" min="24" max="240" step="2">
+                        </div>
+                        <div class="form-group">
+                            <label>💪 加粗</label>
+                            <select id="fontWeight">
+                                <option value="normal">正常</option>
+                                <option value="bold">加粗</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- 免费商用字体选择 + 上传自定义 -->
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>🔤 预设字体 (免费商用)</label>
+                            <select id="presetFont">
+                                <option value="system-ui">系统默认</option>
+                                <option value="'Noto Sans SC', 'Noto Sans'">思源黑体</option>
+                                <option value="'LXGW WenKai', '霞鹜文楷'">霞鹜文楷</option>
+                                <option value="'ZCOOL KuaiLe', '快乐体'">站酷快乐体</option>
+                                <option value="'Ma Shan Zheng', '马善政'">马善政手写体</option>
+                                <option value="'Roboto', 'Arial'">Roboto</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>🖌️ 上传TTF/OTF</label>
+                            <input type="file" id="fontUpload" accept=".ttf,.otf">
+                        </div>
+                    </div>
+
+                    <!-- 轮廓顺序 -->
+                    <div class="outline-group">
+                        <div class="outline-item">
+                            <span>❶ 贴近层 (内层) 最大250px</span>
+                            <input type="number" id="innerOutlineSize" value="12" min="0" max="250" step="1"><span>px</span>
+                            <input type="color" id="innerOutlineColor" value="#FFFFFF">
+                        </div>
+                        <div class="outline-item">
+                            <span>❷ 向外层 (中层) 最大550px</span>
+                            <input type="number" id="midOutlineSize" value="24" min="0" max="550" step="2"><span>px</span>
+                            <input type="color" id="midOutlineColor" value="#E2F0D3">
+                        </div>
+                        <div class="outline-item">
+                            <span>❸ 最外层 (外层) 最大800px</span>
+                            <input type="number" id="outerOutlineSize" value="36" min="0" max="800" step="2"><span>px</span>
+                            <input type="color" id="outerOutlineColor" value="#B3D0A2">
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>📏 文字间距 (±200%)</label>
+                            <input type="range" id="letterSpacing" min="-200" max="200" value="30" step="2">
+                            <span id="spacingValue" class="badge">30%</span>
+                        </div>
+                    </div>
+                    
+                    <label>🌀 排列效果</label>
+                    <div class="layout-buttons">
+                        <div class="layout-btn" data-layout="horizontal">横排</div>
+                        <div class="layout-btn" data-layout="vertical">竖排</div>
+                        <div class="layout-btn" data-layout="wave">波浪形</div>
+                    </div>
+                    <input type="hidden" id="layoutEffect" value="horizontal">
+                    
+                    <!-- 每个字符独立颜色 -->
+                    <div style="margin-top: 12px;">
+                        <div class="flex-between" style="display: flex; justify-content: space-between; align-items: center;">
+                            <label>🎨 每个字符独立颜色</label>
+                            <button id="resetCharColors" class="btn-small" style="background:#f0f0e0;">重置全部</button>
+                        </div>
+                        <div id="charColorsContainer" class="char-colors-area">
+                            <!-- 动态生成每个字符的颜色选择器 -->
+                        </div>
+                    </div>
+                    <div class="info-note">✨ 多行文字自动换行，三层轮廓逐字描边且重叠相连，形成连续云朵效果</div>
+                </div>
+            </div>
+
+            <!-- 图片板块：多图管理（最多6张） -->
+            <div id="tab-image" class="tab-content">
+                <div class="card-section">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>📎 上传 PNG / JPG（最多6张）</label>
+                            <input type="file" id="imageUpload" accept="image/png,image/jpeg,image/jpg" multiple>
+                        </div>
+                        <div class="form-group">
+                            <button id="deleteAllImagesBtn" style="background:#f5e2e2; color:#a55;">🗑️ 删除全部</button>
+                        </div>
+                    </div>
+                    <div id="multiImageList" class="multi-image-list"></div>
+                    <div class="info-note">✨ 每张图片可独立设置图层（背景/前景）、位置、大小、旋转、翻转；鼠标拖拽移动当前选中图片</div>
+                </div>
+            </div>
+
+            <!-- 下载板块 -->
+            <div id="tab-download" class="tab-content">
+                <div class="card-section">
+                    <div style="display: flex; justify-content: center;">
+                        <button id="downloadCurrentBtn" class="btn-download">✨ 下载当前 (高清PNG)</button>
+                    </div>
+                    <div class="spacer" style="margin-top: 16px; text-align: center;">
+                        <span class="badge">图片分辨率 1500x900 像素，清晰度优化</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧预览区 -->
+        <div class="preview-panel">
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="mainCanvas" width="1500" height="900" style="width:100%; height:auto; border-radius:20px;"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+        // ---------- 高清画布 ----------
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 1500;
+        canvas.height = 900;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // DOM 元素
+        const textInput = document.getElementById('textInput');
+        const txtFileUpload = document.getElementById('txtFileUpload');
+        const globalColorPicker = document.getElementById('globalColor');
+        const applyGlobalColorBtn = document.getElementById('applyGlobalColor');
+        const fontSizeInput = document.getElementById('fontSize');
+        const fontWeightSelect = document.getElementById('fontWeight');
+        const fontUpload = document.getElementById('fontUpload');
+        const presetFontSelect = document.getElementById('presetFont');
+        
+        const innerOutlineSize = document.getElementById('innerOutlineSize');
+        const innerOutlineColor = document.getElementById('innerOutlineColor');
+        const midOutlineSize = document.getElementById('midOutlineSize');
+        const midOutlineColor = document.getElementById('midOutlineColor');
+        const outerOutlineSize = document.getElementById('outerOutlineSize');
+        const outerOutlineColor = document.getElementById('outerOutlineColor');
+        
+        const letterSpacingSlider = document.getElementById('letterSpacing');
+        const spacingValueSpan = document.getElementById('spacingValue');
+        const layoutEffectHidden = document.getElementById('layoutEffect');
+        
+        const imageUpload = document.getElementById('imageUpload');
+        const deleteAllImagesBtn = document.getElementById('deleteAllImagesBtn');
+        const multiImageList = document.getElementById('multiImageList');
+        const charColorsContainer = document.getElementById('charColorsContainer');
+        const resetCharColorsBtn = document.getElementById('resetCharColors');
+        
+        // 多图管理
+        let images = [];          // 每项 { img, transform, layer, id }
+        let selectedImageIndex = -1;
+        let nextImageId = 1;
+        const MAX_IMAGES = 6;
+        
+        // 文字相关
+        let customFontFamily = null;
+        let selectedPresetFont = presetFontSelect.value;
+        let charColors = [];
+        let currentLayout = 'horizontal';
+        
+        // 获取多行文本数组（按换行分割）
+        function getTextLines() {
+            let raw = textInput.value;
+            let lines = raw.split(/\r?\n/).filter(l => l.trim().length > 0);
+            if(lines.length === 0) lines = ['云朵字'];
+            return lines;
+        }
+        
+        // 获取所有字符（用于颜色面板，按行顺序拼接）
+        function getAllCharsFromLines() {
+            return getTextLines().join('').split('');
+        }
+        
+        function updateCharColorsFromText() {
+            const chars = getAllCharsFromLines();
+            while(charColors.length < chars.length) charColors.push(globalColorPicker.value);
+            while(charColors.length > chars.length) charColors.pop();
+            renderCharColorsUI();
+        }
+        
+        function renderCharColorsUI() {
+            const chars = getAllCharsFromLines();
+            charColorsContainer.innerHTML = '';
+            if(chars.length === 0) {
+                charColorsContainer.innerHTML = '<div class="badge">暂无字符</div>';
+                return;
+            }
+            chars.forEach((ch, idx) => {
+                const row = document.createElement('div');
+                row.className = 'char-color-row';
+                row.innerHTML = `
+                    <span class="char-index">${idx+1}</span>
+                    <span class="char-char">${ch === ' ' ? '空格' : ch}</span>
+                    <input type="color" class="char-color-input" value="${charColors[idx] || '#4A6741'}" data-index="${idx}">
+                `;
+                const colorInput = row.querySelector('.char-color-input');
+                colorInput.addEventListener('input', (e) => {
+                    charColors[idx] = e.target.value;
+                    renderCanvas();
+                });
+                charColorsContainer.appendChild(row);
+            });
+        }
+        
+        function resetAllCharColors() {
+            const globalColor = globalColorPicker.value;
+            const chars = getAllCharsFromLines();
+            charColors = chars.map(() => globalColor);
+            renderCharColorsUI();
+            renderCanvas();
+        }
+        
+        textInput.addEventListener('input', () => {
+            updateCharColorsFromText();
+            renderCanvas();
+        });
+        txtFileUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                textInput.value = ev.target.result;
+                updateCharColorsFromText();
+                renderCanvas();
+            };
+            reader.readAsText(file, 'UTF-8');
+        });
+        applyGlobalColorBtn.addEventListener('click', resetAllCharColors);
+        resetCharColorsBtn.addEventListener('click', resetAllCharColors);
+        
+        // 字体
+        presetFontSelect.addEventListener('change', () => {
+            selectedPresetFont = presetFontSelect.value;
+            customFontFamily = null;
+            renderCanvas();
+        });
+        fontUpload.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const fontName = 'customFont_' + Date.now();
+            const fontUrl = URL.createObjectURL(file);
+            const fontFace = new FontFace(fontName, `url(${fontUrl})`);
+            try {
+                await fontFace.load();
+                document.fonts.add(fontFace);
+                customFontFamily = fontName;
+                presetFontSelect.value = "system-ui";
+                selectedPresetFont = "system-ui";
+                renderCanvas();
+            } catch(err) {
+                customFontFamily = null;
+                alert("字体文件无效");
+            } finally {
+                URL.revokeObjectURL(fontUrl);
+            }
+        });
+        
+        // 轮廓边界保护
+        function enforceOutlineMax(el, max) { if(el.value > max) el.value = max; if(el.value < 0) el.value = 0; renderCanvas(); }
+        innerOutlineSize.addEventListener('change', () => enforceOutlineMax(innerOutlineSize, 250));
+        midOutlineSize.addEventListener('change', () => enforceOutlineMax(midOutlineSize, 550));
+        outerOutlineSize.addEventListener('change', () => enforceOutlineMax(outerOutlineSize, 800));
+        
+        function updateSpacingLabel() { spacingValueSpan.innerText = letterSpacingSlider.value + '%'; renderCanvas(); }
+        letterSpacingSlider.addEventListener('input', updateSpacingLabel);
+        updateSpacingLabel();
+        
+        // 排列效果
+        const layoutBtns = document.querySelectorAll('.layout-btn');
+        function setLayout(layout) {
+            currentLayout = layout;
+            layoutEffectHidden.value = layout;
+            layoutBtns.forEach(btn => {
+                if(btn.dataset.layout === layout) btn.classList.add('active-layout');
+                else btn.classList.remove('active-layout');
+            });
+            renderCanvas();
+        }
+        layoutBtns.forEach(btn => btn.addEventListener('click', () => setLayout(btn.dataset.layout)));
+        setLayout('horizontal');
+        
+        // 选项卡切换
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.dataset.tab;
+                tabBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                tabContents.forEach(content => content.classList.remove('active-tab'));
+                document.getElementById(tabId).classList.add('active-tab');
+            });
+        });
+        
+        // ---------- 多图管理 ----------
+        function addImageFromFile(file) {
+            if(images.length >= MAX_IMAGES) {
+                alert(`最多只能添加${MAX_IMAGES}张图片`);
+                return;
+            }
+            const img = new Image();
+            img.onload = () => {
+                let w = img.width, h = img.height;
+                let maxW = 500, maxH = 400;
+                if(w > maxW) { h = (h * maxW) / w; w = maxW; }
+                if(h > maxH) { w = (w * maxH) / h; h = maxH; }
+                images.push({
+                    id: nextImageId++,
+                    img: img,
+                    transform: { width: w, height: h, x: canvas.width/2, y: canvas.height/2, rotate: 0, flipH: false, flipV: false },
+                    layer: 'background'
+                });
+                renderImageList();
+                renderCanvas();
+            };
+            img.onerror = () => alert('图片加载失败');
+            img.src = URL.createObjectURL(file);
+        }
+        
+        imageUpload.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(f => addImageFromFile(f));
+            imageUpload.value = '';
+        });
+        
+        function deleteImage(index) {
+            images.splice(index, 1);
+            if(selectedImageIndex >= images.length) selectedImageIndex = -1;
+            renderImageList();
+            renderCanvas();
+        }
+        
+        deleteAllImagesBtn.addEventListener('click', () => {
+            images = [];
+            selectedImageIndex = -1;
+            renderImageList();
+            renderCanvas();
+        });
+        
+        function renderImageList() {
+            multiImageList.innerHTML = '';
+            images.forEach((imgObj, idx) => {
+                const t = imgObj.transform;
+                const card = document.createElement('div');
+                card.className = 'image-card';
+                card.innerHTML = `
+                    <div class="image-card-header">
+                        <span class="image-card-title">图片 ${idx+1}</span>
+                        <div>
+                            <button class="btn-small" data-select="${idx}">${selectedImageIndex === idx ? '✓ 已选' : '选择'}</button>
+                            <button class="btn-small" data-delete="${idx}" style="background:#f5e2e2;">删除</button>
+                        </div>
+                    </div>
+                    <div class="transform-row">
+                        <label>图层</label>
+                        <select data-layer="${idx}">
+                            <option value="background" ${imgObj.layer === 'background' ? 'selected' : ''}>背景</option>
+                            <option value="foreground" ${imgObj.layer === 'foreground' ? 'selected' : ''}>前景</option>
+                        </select>
+                        <label>X</label><input type="number" data-x="${idx}" value="${t.x}" step="5" style="width:70px">
+                        <label>Y</label><input type="number" data-y="${idx}" value="${t.y}" step="5" style="width:70px">
+                    </div>
+                    <div class="transform-row">
+                        <label>宽</label><input type="number" data-w="${idx}" value="${t.width}" step="10" style="width:70px">
+                        <label>高</label><input type="number" data-h="${idx}" value="${t.height}" step="10" style="width:70px">
+                        <label>旋转</label><input type="number" data-rot="${idx}" value="${t.rotate}" step="5" style="width:70px">
+                    </div>
+                    <div class="transform-row">
+                        <button class="icon-btn" data-fliph="${idx}">↔️ 水平翻转</button>
+                        <button class="icon-btn" data-flipv="${idx}">↕️ 垂直翻转</button>
+                        <button class="icon-btn" data-reset="${idx}">⟳ 重置</button>
+                    </div>
+                `;
+                multiImageList.appendChild(card);
+                // 绑定事件
+                card.querySelector(`[data-select="${idx}"]`).onclick = () => { selectedImageIndex = idx; renderImageList(); renderCanvas(); };
+                card.querySelector(`[data-delete="${idx}"]`).onclick = () => deleteImage(idx);
+                card.querySelector(`[data-layer="${idx}"]`).onchange = (e) => { imgObj.layer = e.target.value; renderCanvas(); };
+                card.querySelector(`[data-x="${idx}"]`).oninput = (e) => { t.x = parseFloat(e.target.value); renderCanvas(); };
+                card.querySelector(`[data-y="${idx}"]`).oninput = (e) => { t.y = parseFloat(e.target.value); renderCanvas(); };
+                card.querySelector(`[data-w="${idx}"]`).oninput = (e) => { t.width = parseFloat(e.target.value); renderCanvas(); };
+                card.querySelector(`[data-h="${idx}"]`).oninput = (e) => { t.height = parseFloat(e.target.value); renderCanvas(); };
+                card.querySelector(`[data-rot="${idx}"]`).oninput = (e) => { t.rotate = parseFloat(e.target.value); renderCanvas(); };
+                card.querySelector(`[data-fliph="${idx}"]`).onclick = () => { t.flipH = !t.flipH; renderCanvas(); };
+                card.querySelector(`[data-flipv="${idx}"]`).onclick = () => { t.flipV = !t.flipV; renderCanvas(); };
+                card.querySelector(`[data-reset="${idx}"]`).onclick = () => {
+                    t.width = 300; t.height = 200; t.x = canvas.width/2; t.y = canvas.height/2; t.rotate = 0; t.flipH = false; t.flipV = false;
+                    renderCanvas();
+                };
+            });
+        }
+        
+        // 鼠标拖拽移动当前选中的图片
+        let isDraggingImage = false;
+        let dragStartImg = { x: 0, y: 0 };
+        canvas.addEventListener('mousedown', (e) => {
+            if(selectedImageIndex === -1 || !images[selectedImageIndex]) return;
+            isDraggingImage = true;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            dragStartImg.x = (e.clientX - rect.left) * scaleX;
+            dragStartImg.y = (e.clientY - rect.top) * scaleY;
+            e.preventDefault();
+        });
+        window.addEventListener('mousemove', (e) => {
+            if(!isDraggingImage || selectedImageIndex === -1) return;
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const currentX = (e.clientX - rect.left) * scaleX;
+            const currentY = (e.clientY - rect.top) * scaleY;
+            const deltaX = currentX - dragStartImg.x;
+            const deltaY = currentY - dragStartImg.y;
+            images[selectedImageIndex].transform.x += deltaX;
+            images[selectedImageIndex].transform.y += deltaY;
+            dragStartImg.x = currentX;
+            dragStartImg.y = currentY;
+            renderImageList();
+            renderCanvas();
+        });
+        window.addEventListener('mouseup', () => { isDraggingImage = false; });
+        
+        // ---------- 绘图核心 ----------
+        function drawTransformedImage(imgObj) {
+            const t = imgObj.transform;
+            ctx.save();
+            ctx.translate(t.x, t.y);
+            ctx.rotate(t.rotate * Math.PI / 180);
+            ctx.scale(t.flipH ? -1 : 1, t.flipV ? -1 : 1);
+            ctx.drawImage(imgObj.img, -t.width/2, -t.height/2, t.width, t.height);
+            ctx.restore();
+        }
+        
+        function getFinalFontFamily() {
+            if(customFontFamily) return `"${customFontFamily}"`;
+            if(selectedPresetFont && selectedPresetFont !== "system-ui") return selectedPresetFont;
+            return `"PingFang SC", "Microsoft YaHei", "Segoe UI", system-ui`;
+        }
+        
+        // 获取多行文字每个字符的位置（用于整体描边和填充）
+        function getMultiLineCharPositions(lines, fontSize, fontWeight, spacingPercent, layout, canvasWidth, canvasHeight) {
+            if(!lines.length) return [];
+            const fontFamily = getFinalFontFamily();
+            const fontString = `${fontWeight} ${fontSize}px ${fontFamily}`;
+            ctx.font = fontString;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            function getCharWidth(ch) {
+                ctx.save();
+                ctx.font = fontString;
+                const w = ctx.measureText(ch).width;
+                ctx.restore();
+                return w;
+            }
+            const positions = [];
+            const lineHeight = fontSize * 1.2;
+            const totalHeight = lines.length * lineHeight;
+            const startY = (canvasHeight - totalHeight) / 2 + fontSize/2;
+            let globalCharIndex = 0;
+            for(let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
+                const lineText = lines[lineIdx];
+                const chars = [...lineText];
+                if(chars.length === 0) continue;
+                let totalWidth = 0;
+                const widths = chars.map(ch => getCharWidth(ch));
+                for(let i=0; i<chars.length; i++) totalWidth += widths[i] + (spacingPercent/100)*widths[i];
+                totalWidth -= (spacingPercent/100)*widths[chars.length-1];
+                let startX = (canvasWidth - totalWidth) / 2;
+                let curX = startX;
+                let baseY = startY + lineIdx * lineHeight;
+                for(let idx=0; idx<chars.length; idx++) {
+                    const w = widths[idx];
+                    const offset = (spacingPercent/100)*w;
+                    const drawX = curX + w/2;
+                    let drawY = baseY;
+                    if(currentLayout === 'wave') {
+                        drawY = baseY + Math.sin(idx * Math.PI / 1.5) * 36;
+                    }
+                    positions.push({ x: drawX, y: drawY, char: chars[idx], idx: globalCharIndex++ });
+                    curX += w + offset;
+                }
+            }
+            return positions;
+        }
+        
+        function renderCanvas() {
+            if(!ctx) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 默认背景
+            ctx.fillStyle = '#FDFBF0';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#e6f0dc';
+            for(let i=0;i<200;i++) {
+                ctx.beginPath();
+                ctx.arc(20+Math.random()*canvas.width, 20+Math.random()*canvas.height, Math.random()*3, 0, Math.PI*2);
+                ctx.fill();
+            }
+            // 背景层图片
+            images.forEach(img => { if(img.layer === 'background') drawTransformedImage(img); });
+            
+            // 文字
+            const lines = getTextLines();
+            const fontSize = parseInt(fontSizeInput.value);
+            const fontWeight = fontWeightSelect.value;
+            const spacingPercent = parseInt(letterSpacingSlider.value);
+            const positions = getMultiLineCharPositions(lines, fontSize, fontWeight, spacingPercent, currentLayout, canvas.width, canvas.height);
+            if(positions.length > 0) {
+                // 三层轮廓（从外到内）
+                const outlines = [
+                    { size: parseInt(outerOutlineSize.value), color: outerOutlineColor.value },
+                    { size: parseInt(midOutlineSize.value), color: midOutlineColor.value },
+                    { size: parseInt(innerOutlineSize.value), color: innerOutlineColor.value }
+                ].filter(o => o.size > 0);
+                const fontFamily = getFinalFontFamily();
+                const fontString = `${fontWeight} ${fontSize}px ${fontFamily}`;
+                // 逐层描边
+                for(let layer of outlines) {
+                    ctx.save();
+                    ctx.font = fontString;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.lineWidth = layer.size * 2;
+                    ctx.strokeStyle = layer.color;
+                    for(let pos of positions) {
+                        ctx.strokeText(pos.char, pos.x, pos.y);
+                    }
+                    ctx.restore();
+                }
+                // 填充颜色
+                ctx.save();
+                ctx.font = fontString;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                for(let pos of positions) {
+                    const color = charColors[pos.idx] || globalColorPicker.value;
+                    ctx.fillStyle = color;
+                    ctx.fillText(pos.char, pos.x, pos.y);
+                }
+                ctx.restore();
+            }
+            
+            // 前景层图片
+            images.forEach(img => { if(img.layer === 'foreground') drawTransformedImage(img); });
+        }
+        
+        function downloadCurrent() {
+            renderCanvas();
+            const link = document.createElement('a');
+            link.download = `花一云朵字_${Date.now()}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+        document.getElementById('downloadCurrentBtn').addEventListener('click', downloadCurrent);
+        
+        // 初始化
+        updateCharColorsFromText();
+        const allParams = [textInput, fontSizeInput, fontWeightSelect, innerOutlineSize, innerOutlineColor, midOutlineSize, midOutlineColor, outerOutlineSize, outerOutlineColor, letterSpacingSlider, presetFontSelect];
+        allParams.forEach(el => el.addEventListener('input', () => renderCanvas()));
+        textInput.addEventListener('blur', () => renderCanvas());
+        window.addEventListener('load', () => {
+            renderCanvas();
+            renderImageList();
+        });
+        renderCanvas();
+    })();
+</script>
+</body>
+</html>
